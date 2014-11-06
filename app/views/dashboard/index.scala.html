@@ -1,0 +1,13 @@
+@(user: User, enableMfaUrl: String)
+
+@main(user) {
+
+    @if(user.mfa_access_token == null){
+        <p>
+            <a href='@enableMfaUrl'>Enable MFA</a>
+        </p>
+    }
+
+    DASHBOARD Example
+
+}

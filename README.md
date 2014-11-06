@@ -1,11 +1,11 @@
 # About
 
-This is a demo project that demonstrate how to integrate your account system (users) with Acceptto multifactor authentication system.
+This is a demo project that demonstrates how to integrate your account system (users) with Acceptto multifactor authentication/authorization system.
 
 # How to Run
 
 1. Install [Play Framework 2.3](https://www.playframework.com/download)
-2. Clone the project and goto the project directory
+2. Clone the project and go to the project directory
 3. Configure the database according to the `conf/application.conf`
 4. Make sure that mfa site which is set in `conf/application.conf` is available (local or public)
 4. Run `activator run` and browse to `localhost:9000`
@@ -73,8 +73,8 @@ Pass `enableMfaUrl` to the dashboard `index.scala.html` in `Dashboard.java`:
 Add the following configuration to `application.conf`:
 
 ```
-mfa.app.uid="application unique id you got from acceptto"
-mfa.app.secret="mfa app secret you got from acceptto"
+mfa.app.uid="application unique id you've got from Acceptto"
+mfa.app.secret="mfa app secret you've got from Acceptto"
 mfa.site="https://mfa.acceptto.com"
 ```
 

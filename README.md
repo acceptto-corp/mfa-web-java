@@ -18,7 +18,7 @@ Before being able to use this sample you need to obtain an Acceptto MFA Applicat
 # Run the sample project
 
 1. Install [sbt](https://www.scala-sbt.org/download.html)
-2. Download or clone the Acceptto sample project and go to the project directory
+2. `git clone git@github.com:acceptto-corp/mfa-web-java.git` and go to `mfa-web-java` directory
 3. Configure the database according to the `conf/application.conf`
     - Using docker you can easily bring up a temporary database: `docker run -p5432:5432 -e POSTGRES_PASSWORD=123456 -e POSTGRES_DB=acceptto-mfa-java postgres`
 4. Make sure that `mfa.app.uid`, `mfa.app.secret`, `mfa.site` values are set correctly in `conf/application.conf`

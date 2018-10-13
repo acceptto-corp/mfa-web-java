@@ -1,28 +1,29 @@
-# About
+# Introduction
 
-This is a demo project that demonstrates how to integrate your account system (users) with Acceptto multifactor authentication/authorization system.
+This is a demo project that demonstrates how to integrate your account system (users) with Acceptto multi-factor authentication/authorization system.
 
-# How to Run
+# Run the sample project
 
-1. Install [Play Framework 2.3](https://www.playframework.com/download)
+1. Install [sbt](https://www.scala-sbt.org/download.html)
 2. Clone the project and go to the project directory
 3. Configure the database according to the `conf/application.conf`
 4. Make sure that mfa site which is set in `conf/application.conf` is available (local or public)
-4. Run `activator run` and browse to `localhost:9000`
+4. Run `sbt run` and browse to `localhost:9000`
 5. Apply evolution (it'll asked for the first time to setup database)
 
-# Create the project from scratch
+# Create a new project from scratch
 
-You can create another project from scratch.
+In this section you'll see how this sample project has been developed step-by-step. This guide uses Play Framework (Java version) but the concepts is the same for any other Java framework. You can use most part of the provided code in any other framework.
 
-## Create Project
+## Create a new project
 
-1. Install [Play Framework 2.3](https://www.playframework.com/download) (Typesafe Activator)
-2. Run `activator new`
-3. Enter `PlayStartApp` as template name
-4. Apply the following changes into the `PlayStartApp` project
+To create a new Play application project:
 
-## Models
+1. Install [sbt](https://www.scala-sbt.org/download.html)
+2. Clone `https://github.com/yesnault/PlayStartApp` project. This is a sample Java Play application already implemented a simple authentication system including Signup, Signin, etc.
+4. Apply the following changes into the cloned project
+
+## Data access
 
 Add the following fields to `User` model.
 
@@ -34,11 +35,11 @@ Add the following fields to `User` model.
 
 ## Setup email settings
 
-rename `mail.conf.example` to `mail.conf` and update data.
+rename `mail.conf.example` to `mail.conf` and setup values for a valid SMTP configs.
 
-## Add Enable MFA link to view
+## Add enabling MFA link to view
 
-Change `index.scala.html` signature to get `enableMfaUrl` as parameter and show it when `mfa_access_token` exist:
+Change `dashboard/index.scala.html` signature to get `enableMfaUrl` as parameter and show it when `mfa_access_token` exist:
 
 ```
 @(user: User, enableMfaUrl: String)
@@ -95,9 +96,6 @@ import play.libs.ws.*;
 import play.libs.F.Function;
 import play.libs.F.Promise;
 
-/**
- * Created by amir on 11/5/14.
- */
 public class Mfa extends Controller {
 
     public static Result callBack() {
@@ -200,7 +198,7 @@ GET     /mfa                        controllers.Dashboard.index()
 
 ## Security
 
-Implement `Authenticator`:
+Updated the `Secured.java` class like this:
 
 ```java
 public class Secured extends Security.Authenticator {

@@ -23,5 +23,6 @@ resolvers ++= Seq(
     "Sonatype OSS Snasphots" at "http://oss.sonatype.org/content/repositories/snapshots"
 )
 
-
 lazy val root = (project in file(".")).enablePlugins(play.PlayJava)
+
+TwirlKeys.templateImports += "model._"

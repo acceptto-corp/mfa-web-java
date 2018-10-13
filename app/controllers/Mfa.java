@@ -11,9 +11,6 @@ import play.libs.ws.*;
 import play.libs.F.Function;
 import play.libs.F.Promise;
 
-/**
- * Created by amir on 11/5/14.
- */
 public class Mfa extends Controller {
 
     public static Result callBack() {

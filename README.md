@@ -35,7 +35,7 @@ In this section you'll see how this sample project has been developed step-by-st
 To create a new Play application project:
 
 1. Install [sbt](https://www.scala-sbt.org/download.html)
-2. Clone `https://github.com/yesnault/PlayStartApp` project. This is a sample Java Play application already implemented a simple authentication system including Signup, Signin, etc.
+2. Download the [Play sample project](https://github.com/yesnault/PlayStartApp/archive/v1.2-play2.3.0-RC2.zip). This is a sample Java Play application already implemented a simple authentication system including Signup, Signin, etc.
 4. Apply the following changes into the cloned project
 
 ## Data access

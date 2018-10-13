@@ -2,12 +2,27 @@
 
 This is a demo project that demonstrates how to integrate your account system (users) with Acceptto multi-factor authentication/authorization system.
 
+# Requirement
+
+Before being able to use this sample you need to obtain an Acceptto MFA Application UID and Secret:
+
+1. [Singup](https://acceptto.com/users/sign_up) for a new Acceptto acount or [Login](https://acceptto.com/users/sign_in) to your Accpetto dashboard
+1. Navigate to **Applications** through the side menu
+1. Click on the **New Application** button to create a new application, and then
+	1. Choose a **Name** for your application which you're going to enable the multi-factor authentication for
+	1. Set the **Redirect URL** to https://acceptto.com
+	1. Set the **Color** to whatever you like, this is the color band user will see next to your application name in Acceptto mobile app
+1. Find the new create application in the list and click on **Details** button
+2. Copy and keep the **UID** and **Secret**. You will need them in the next steps
+
 # Run the sample project
 
 1. Install [sbt](https://www.scala-sbt.org/download.html)
 2. Clone the project and go to the project directory
 3. Configure the database according to the `conf/application.conf`
-4. Make sure that mfa site which is set in `conf/application.conf` is available (local or public)
+    - Using docker you can easily bring up a temporary database: `docker run -p5432:5432 -e POSTGRES_PASSWORD=123456 -e POSTGRES_DB=acceptto-mfa-java postgres`
+4. Make sure that `mfa.app.uid`, `mfa.app.secret`, `mfa.site` values are set correctly in `conf/application.conf`
+    * To get `uid` and `secret`, login to your [Acceptto dashboard](https://acceptto.com/users_dashboard/doorkeeper_application) and create a new application
 4. Run `sbt run` and browse to `localhost:9000`
 5. Apply evolution (it'll asked for the first time to setup database)
 
@@ -42,7 +57,7 @@ rename `mail.conf.example` to `mail.conf` and setup values for a valid SMTP conf
 Change `dashboard/index.scala.html` signature to get `enableMfaUrl` as parameter and show it when `mfa_access_token` exist:
 
 ```
-@(user: User, enableMfaUrl: String)
+@(user: LocalUser, enableMfaUrl: String)
 
 @main(user) {
 

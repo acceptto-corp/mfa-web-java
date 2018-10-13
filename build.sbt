@@ -24,5 +24,3 @@ resolvers ++= Seq(
 )
 
 lazy val root = (project in file(".")).enablePlugins(play.PlayJava)
-
-TwirlKeys.templateImports += "model._"

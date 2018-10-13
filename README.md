@@ -18,7 +18,7 @@ Before being able to use this sample you need to obtain an Acceptto MFA Applicat
 # Run the sample project
 
 1. Install [sbt](https://www.scala-sbt.org/download.html)
-2. Clone the project and go to the project directory
+2. Download or clone the Acceptto sample project and go to the project directory
 3. Configure the database according to the `conf/application.conf`
     - Using docker you can easily bring up a temporary database: `docker run -p5432:5432 -e POSTGRES_PASSWORD=123456 -e POSTGRES_DB=acceptto-mfa-java postgres`
 4. Make sure that `mfa.app.uid`, `mfa.app.secret`, `mfa.site` values are set correctly in `conf/application.conf`
@@ -26,9 +26,9 @@ Before being able to use this sample you need to obtain an Acceptto MFA Applicat
 4. Run `sbt run` and browse to `localhost:9000`
 5. Apply evolution (it'll asked for the first time to setup database)
 
-# Create a new project from scratch
+# Apply to an existing project
 
-In this section you'll see how this sample project has been developed step-by-step. This guide uses Play Framework (Java version) but the concepts is the same for any other Java framework. You can use most part of the provided code in any other framework.
+In this section you'll see how you can add MFA to an existing Java project. This guide uses Play Framework (Java version) but the concepts are the same for any other Java framework. You can use most part of the provided code as it is in any other framework.
 
 ## Create a new project
 
@@ -36,7 +36,7 @@ To create a new Play application project:
 
 1. Install [sbt](https://www.scala-sbt.org/download.html)
 2. Download the [Play sample project](https://github.com/yesnault/PlayStartApp/archive/v1.2-play2.3.0-RC2.zip). This is a sample Java Play application already implemented a simple authentication system including Signup, Signin, etc.
-4. Apply the following changes into the cloned project
+4. Apply the following changes into the sample project in order to add MFA support
 
 ## Data access
 

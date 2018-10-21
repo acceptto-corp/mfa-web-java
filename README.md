@@ -10,7 +10,7 @@ Before being able to use this sample you need to obtain an Acceptto MFA Applicat
 1. Navigate to **Applications** through the side menu
 1. Click on the **New Application** button to create a new application, and then
 	1. Choose a **Name** for your application which you're going to enable the multi-factor authentication for
-	1. Set the **Redirect URL** to https://acceptto.com
+	1. Set the **Redirect URL** to `http://localhost:9000/auth/mfa/callback`
 	1. Set the **Color** to whatever you like, this is the color band user will see next to your application name in Acceptto mobile app
 1. Find the new create application in the list and click on **Details** button
 2. Copy and keep the **UID** and **Secret**. You will need them in the next steps
@@ -129,8 +129,8 @@ public class Mfa extends Controller {
             return redirect(routes.Application.index());
         }
 
-        String userName = ctx().request().username();
-        if (userName == null || userName.isEmpty()) {
+        String email = ctx().session().get("email");
+        if (email == null || email.isEmpty()) {
             Logger.debug("MFA Callback - User expired");
             ctx().flash().put("notice", "Time out!");
             return redirect(routes.Application.index());
@@ -138,7 +138,7 @@ public class Mfa extends Controller {
 
         Logger.debug("MFA Callback - Everything OK");
 
-        LocalUser user = LocalUser.findByEmail(userName);
+        LocalUser user = LocalUser.findByEmail(email);
         user.mfa_access_token = accessToken;
         user.mfa_authenticated = true;
         user.save();
@@ -158,9 +158,12 @@ public class Mfa extends Controller {
         String mfaSite = Play.application().configuration().getString("mfa.site");
         String channel = ctx().session().get("channel");
 
-        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v6/check")
+        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/check")
                 .setHeader("Authorization", "Bearer " + user.mfa_access_token)
                 .setContentType("application/x-www-form-urlencoded")
+                .setQueryParameter("email", email)
+                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                 .post("channel=" + channel);
 
         Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {
@@ -254,17 +257,20 @@ Change `authenticate` method of Application.java:
 
             session("email", loginForm.get().email);
 
-            final User user = User.findByEmail(loginForm.get().email);
+            final LocalUser user = LocalUser.findByEmail(loginForm.get().email);
             if (user.mfa_access_token != null) {
                 user.mfa_authenticated = false;
                 user.save();
 
                 final String mfaSite = Play.application().configuration().getString("mfa.site");
 
-                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v6/authenticate")
+                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/authenticate")
                         .setHeader("Authorization", "Bearer " + user.mfa_access_token)
                         .setQueryParameter("message", "Acceptto is wishing to authorize")
                         .setQueryParameter("type", "Login")
+                        .setQueryParameter("email", loginForm.get().email)
+                        .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                        .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                         .setContentType("application/x-www-form-urlencoded")
                         .post("");
 
@@ -273,10 +279,17 @@ Change `authenticate` method of Application.java:
                     public Result apply(WSResponse wsResponse) throws Throwable {
                         JsonNode json = wsResponse.asJson();
 
+                        Logger.debug(json.toString());
+
+                        if (json.has("success") && !json.get("success").asBoolean()) {
+                            flash("error", json.get("message").asText());
+                            return GO_HOME;
+                        }
+
                         String channel = json.get("channel").asText();
                         ctx().session().put("channel", channel);
 
-                        String callbackUrl = routes.Mfa.callBack().absoluteURL(ctx().request());
+                        String callbackUrl = routes.Mfa.check().absoluteURL(ctx().request());
                         String redirectUrl = mfaSite + "/mfa/index?channel=" + channel + "&callback_url=" + callbackUrl;
 
                         return redirect(redirectUrl);

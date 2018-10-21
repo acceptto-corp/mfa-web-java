@@ -5,6 +5,7 @@ import models.LocalUser;
 import models.utils.AppException;
 import play.Logger;
 import play.Play;
+import play.api.libs.json.Json;
 import play.data.Form;
 import play.data.validation.Constraints;
 import play.i18n.Messages;
@@ -148,10 +149,13 @@ public class Application extends Controller {
 
                 final String mfaSite = Play.application().configuration().getString("mfa.site");
 
-                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v6/authenticate")
+                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/authenticate")
                         .setHeader("Authorization", "Bearer " + user.mfa_access_token)
                         .setQueryParameter("message", "Acceptto is wishing to authorize")
                         .setQueryParameter("type", "Login")
+                        .setQueryParameter("email", loginForm.get().email)
+                        .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                        .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                         .setContentType("application/x-www-form-urlencoded")
                         .post("");
 
@@ -159,6 +163,13 @@ public class Application extends Controller {
                     @Override
                     public Result apply(WSResponse wsResponse) throws Throwable {
                         JsonNode json = wsResponse.asJson();
+
+                        Logger.debug(json.toString());
+
+                        if (json.has("success") && !json.get("success").asBoolean()) {
+                            flash("error", json.get("message").asText());
+                            return GO_HOME;
+                        }
 
                         String channel = json.get("channel").asText();
                         ctx().session().put("channel", channel);

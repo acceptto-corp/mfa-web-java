@@ -29,8 +29,8 @@ public class Mfa extends Controller {
             return redirect(routes.Application.index());
         }
 
-        String userName = ctx().request().username();
-        if (userName == null || userName.isEmpty()) {
+        String email = ctx().session().get("email");
+        if (email == null || email.isEmpty()) {
             Logger.debug("MFA Callback - User expired");
             ctx().flash().put("notice", "Time out!");
             return redirect(routes.Application.index());
@@ -38,7 +38,7 @@ public class Mfa extends Controller {
 
         Logger.debug("MFA Callback - Everything OK");
 
-        LocalUser user = LocalUser.findByEmail(userName);
+        LocalUser user = LocalUser.findByEmail(email);
         user.mfa_access_token = accessToken;
         user.mfa_authenticated = true;
         user.save();
@@ -58,9 +58,12 @@ public class Mfa extends Controller {
         String mfaSite = Play.application().configuration().getString("mfa.site");
         String channel = ctx().session().get("channel");
 
-        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v6/check")
+        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/check")
                 .setHeader("Authorization", "Bearer " + user.mfa_access_token)
                 .setContentType("application/x-www-form-urlencoded")
+                .setQueryParameter("email", email)
+                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                 .post("channel=" + channel);
 
         Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {

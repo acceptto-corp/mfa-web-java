@@ -43,6 +43,14 @@
                     </div>
                 }
 
+                @if(flash.get("error") != null){
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+
+                    @flash.get("error")
+                </div>
+                }
+
                 @content
             </div>
         </div>

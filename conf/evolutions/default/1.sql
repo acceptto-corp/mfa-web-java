@@ -4,44 +4,38 @@
 # --- !Ups
 
 create table local_user (
-  id                        bigint not null,
+  id                        integer primary key AUTOINCREMENT,
   email                     varchar(255),
   fullname                  varchar(255),
   confirmation_token        varchar(255),
   password_hash             varchar(255),
   date_creation             timestamp,
-  validated                 boolean,
+  validated                 integer(1),
   mfa_access_token          varchar(255),
-  mfa_authenticated         boolean,
+  mfa_authenticated         integer(1),
   constraint uq_local_user_email unique (email),
-  constraint uq_local_user_fullname unique (fullname),
-  constraint pk_local_user primary key (id))
+  constraint uq_local_user_fullname unique (fullname))
 ;
 
 create table token (
-  token                     varchar(255) not null,
-  user_id                   bigint,
+  token                     varchar(255) primary key,
+  user_id                   integer,
   type                      varchar(8),
   date_creation             timestamp,
   email                     varchar(255),
-  constraint ck_token_type check (type in ('password','email')),
-  constraint pk_token primary key (token))
+  constraint ck_token_type check (type in ('password','email')))
 ;
-
-create sequence local_user_seq;
-
-create sequence token_seq;
 
 
 
 
 # --- !Downs
 
-drop table if exists local_user cascade;
+PRAGMA foreign_keys = OFF;
 
-drop table if exists token cascade;
+drop table local_user;
 
-drop sequence if exists local_user_seq;
+drop table token;
 
-drop sequence if exists token_seq;
+PRAGMA foreign_keys = ON;
 

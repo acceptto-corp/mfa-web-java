@@ -149,13 +149,10 @@ public class Application extends Controller {
 
                 final String mfaSite = Play.application().configuration().getString("mfa.site");
 
-                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/authenticate")
+                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v8/authenticate")
                         .setHeader("Authorization", "Bearer " + user.mfa_access_token)
                         .setQueryParameter("message", "Acceptto is wishing to authorize")
                         .setQueryParameter("type", "Login")
-                        .setQueryParameter("email", loginForm.get().email)
-                        .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                        .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                         .setContentType("application/x-www-form-urlencoded")
                         .post("");
 

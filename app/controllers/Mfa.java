@@ -58,12 +58,9 @@ public class Mfa extends Controller {
         String mfaSite = Play.application().configuration().getString("mfa.site");
         String channel = ctx().session().get("channel");
 
-        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/check")
+        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v8/check")
                 .setHeader("Authorization", "Bearer " + user.mfa_access_token)
                 .setContentType("application/x-www-form-urlencoded")
-                .setQueryParameter("email", email)
-                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                 .post("channel=" + channel);
 
         Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {

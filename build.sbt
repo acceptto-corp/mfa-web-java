@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" %% "play-plugins-mailer" % "2.2.0",
   filters,
   javaWs,
-  "org.postgresql" % "postgresql" % "9.3-1100-jdbc4"
+  "org.xerial" % "sqlite-jdbc" % "3.25.2"
 )
 
 resolvers ++= Seq(

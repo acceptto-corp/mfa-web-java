@@ -43,7 +43,7 @@ public class LocalUser extends Model {
     @Formats.NonEmpty
     public Boolean validated = false;
 
-    public String mfa_access_token;
+    public String mfa_email;
 
     public Boolean mfa_authenticated;
 

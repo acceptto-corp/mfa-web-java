@@ -11,7 +11,7 @@ create table local_user (
   password_hash             varchar(255),
   date_creation             timestamp,
   validated                 integer(1),
-  mfa_access_token          varchar(255),
+  mfa_email                 varchar(255),
   mfa_authenticated         integer(1),
   constraint uq_local_user_email unique (email),
   constraint uq_local_user_fullname unique (fullname))

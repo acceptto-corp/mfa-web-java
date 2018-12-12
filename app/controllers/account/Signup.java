@@ -1,5 +1,6 @@
 package controllers.account;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import controllers.Application;
 import models.LocalUser;
 import models.utils.AppException;
@@ -8,8 +9,12 @@ import models.utils.Mail;
 import org.apache.commons.mail.EmailException;
 import play.Configuration;
 import play.Logger;
+import play.Play;
 import play.data.Form;
 import play.i18n.Messages;
+import play.libs.F;
+import play.libs.ws.WS;
+import play.libs.ws.WSResponse;
 import play.mvc.Controller;
 import play.mvc.Result;
 import views.html.account.signup.confirm;
@@ -53,18 +58,18 @@ public class Signup extends Controller {
      *
      * @return Successfull page or created form if bad
      */
-    public static Result save() {
+    public static F.Promise<Result> save() {
         Form<Application.Register> registerForm = form(Application.Register.class).bindFromRequest();
 
         if (registerForm.hasErrors()) {
-            return badRequest(create.render(registerForm));
+            return F.Promise.pure(badRequest(create.render(registerForm)));
         }
 
         Application.Register register = registerForm.get();
         Result resultError = checkBeforeSave(registerForm, register.email);
 
         if (resultError != null) {
-            return resultError;
+            return F.Promise.pure(resultError);
         }
 
         try {
@@ -77,12 +82,37 @@ public class Signup extends Controller {
             // Temporary confirm user
             user.validated = true;
 
-            user.save();
+            final String mfaSite = Play.application().configuration().getString("mfa.site");
 
-            // Temporary confirm user
-            //sendMailAskForConfirmation(user);
+            F.Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/is_user_valid")
+                    .setQueryParameter("email", register.email)
+                    .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                    .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                    .setContentType("application/x-www-form-urlencoded")
+                    .post("");
 
-            return ok(created.render());
+            F.Promise<Result> resultPromise = responsePromise.map(new F.Function<WSResponse, Result>() {
+                @Override
+                public Result apply(WSResponse wsResponse) throws Throwable {
+                    JsonNode json = wsResponse.asJson();
+
+                    if (json.has("valid") && json.get("valid").asBoolean()) {
+                        if (json.has("registration_state") && json.get("registration_state").asText().equals("finished")) {
+                            // Using the same email as Acceptto one.
+                            user.mfa_email = register.email;
+                            Logger.debug("MFA email has set to " + register.email);
+                        } else {
+                            Logger.warn("User has started registration in Acceptto but hasn't finished");
+                        }
+                    }
+
+                    user.save();
+
+                    return ok(created.render());
+                }
+            });
+
+            return resultPromise;
         }/* catch (EmailException e) {
             Logger.debug("Signup.save Cannot send email", e);
             flash("error", Messages.get("error.sending.email"));
@@ -90,7 +120,7 @@ public class Signup extends Controller {
             Logger.error("Signup.save error", e);
             flash("error", Messages.get("error.technical"));
         }
-        return badRequest(create.render(registerForm));
+        return F.Promise.pure(badRequest(create.render(registerForm)));
     }
 
     /**

@@ -5,7 +5,6 @@ import models.LocalUser;
 import models.utils.AppException;
 import play.Logger;
 import play.Play;
-import play.api.libs.json.Json;
 import play.data.Form;
 import play.data.validation.Constraints;
 import play.i18n.Messages;
@@ -41,10 +40,10 @@ public class Application extends Controller {
         String email = ctx().session().get("email");
         if (email != null) {
             LocalUser user = LocalUser.findByEmail(email);
-            if (user != null && user.validated && (user.mfa_access_token == null || user.mfa_authenticated)) {
+            if (user != null && user.validated && (user.mfa_email == null || user.mfa_authenticated)) {
                 return GO_DASHBOARD;
             } else {
-                if (user.mfa_access_token != null && !user.mfa_authenticated) {
+                if (user.mfa_email != null && !user.mfa_authenticated) {
                     Logger.debug("User mfa access enabled but is not authenticated");
                 }
 
@@ -143,14 +142,16 @@ public class Application extends Controller {
             session("email", loginForm.get().email);
 
             final LocalUser user = LocalUser.findByEmail(loginForm.get().email);
-            if (user.mfa_access_token != null) {
+            if (user.mfa_email != null) {
                 user.mfa_authenticated = false;
                 user.save();
 
                 final String mfaSite = Play.application().configuration().getString("mfa.site");
 
-                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v8/authenticate")
-                        .setHeader("Authorization", "Bearer " + user.mfa_access_token)
+                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/authenticate_with_options")
+                        .setQueryParameter("email", user.mfa_email)
+                        .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                        .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                         .setQueryParameter("message", "Acceptto is wishing to authorize")
                         .setQueryParameter("type", "Login")
                         .setContentType("application/x-www-form-urlencoded")
@@ -160,8 +161,6 @@ public class Application extends Controller {
                     @Override
                     public Result apply(WSResponse wsResponse) throws Throwable {
                         JsonNode json = wsResponse.asJson();
-
-                        Logger.debug(json.toString());
 
                         if (json.has("success") && !json.get("success").asBoolean()) {
                             flash("error", json.get("message").asText());

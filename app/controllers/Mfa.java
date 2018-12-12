@@ -39,7 +39,7 @@ public class Mfa extends Controller {
         Logger.debug("MFA Callback - Everything OK");
 
         LocalUser user = LocalUser.findByEmail(email);
-        user.mfa_access_token = accessToken;
+        user.mfa_email = accessToken;
         user.mfa_authenticated = true;
         user.save();
 
@@ -58,10 +58,12 @@ public class Mfa extends Controller {
         String mfaSite = Play.application().configuration().getString("mfa.site");
         String channel = ctx().session().get("channel");
 
-        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v8/check")
-                .setHeader("Authorization", "Bearer " + user.mfa_access_token)
-                .setContentType("application/x-www-form-urlencoded")
-                .post("channel=" + channel);
+        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/check")
+                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                .setQueryParameter("channel", channel)
+                .setQueryParameter("email", email)
+                .post("");
 
         Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {
             @Override
@@ -69,7 +71,7 @@ public class Mfa extends Controller {
                 JsonNode json = wsResponse.asJson();
 
                 String status = json.get("status").asText();
-
+                
                 Logger.debug("Check result status: " + status);
 
                 if (status.equals("approved")) {

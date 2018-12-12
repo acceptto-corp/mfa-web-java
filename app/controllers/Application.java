@@ -146,38 +146,7 @@ public class Application extends Controller {
                 user.mfa_authenticated = false;
                 user.save();
 
-                final String mfaSite = Play.application().configuration().getString("mfa.site");
-
-                Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/authenticate_with_options")
-                        .setQueryParameter("email", user.mfa_email)
-                        .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                        .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
-                        .setQueryParameter("message", "Acceptto is wishing to authorize")
-                        .setQueryParameter("type", "Login")
-                        .setContentType("application/x-www-form-urlencoded")
-                        .post("");
-
-                Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {
-                    @Override
-                    public Result apply(WSResponse wsResponse) throws Throwable {
-                        JsonNode json = wsResponse.asJson();
-
-                        if (json.has("success") && !json.get("success").asBoolean()) {
-                            flash("error", json.get("message").asText());
-                            return GO_HOME;
-                        }
-
-                        String channel = json.get("channel").asText();
-                        ctx().session().put("channel", channel);
-
-                        String callbackUrl = routes.Mfa.check().absoluteURL(ctx().request());
-                        String redirectUrl = mfaSite + "/mfa/index?channel=" + channel + "&callback_url=" + callbackUrl;
-
-                        return redirect(redirectUrl);
-                    }
-                });
-
-                return resultPromise;
+                return Mfa.accepttoAuthenticate(user, null);
             }
 
             return Promise.pure(GO_DASHBOARD);

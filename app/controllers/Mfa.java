@@ -2,6 +2,7 @@ package controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import models.LocalUser;
+import org.springframework.cglib.core.Local;
 import play.Logger;
 import play.Play;
 import play.data.DynamicForm;
@@ -110,6 +111,45 @@ public class Mfa extends Controller {
                     ctx().flash().put("notice", "MFA Two Factor Authentication request was unknown!");
                     return redirect(routes.Dashboard.index());
                 }
+            }
+        });
+
+        return resultPromise;
+    }
+
+    public static Promise<Result> accepttoAuthenticate(LocalUser user, Integer authType){
+        final String mfaSite = Play.application().configuration().getString("mfa.site");
+
+        WSRequestHolder request = WS.url(mfaSite + "/api/v9/authenticate_with_options")
+                .setQueryParameter("email", user.mfa_email)
+                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                .setQueryParameter("message", "Acceptto is wishing to authorize")
+                .setQueryParameter("type", "Login");
+
+        if (authType != null) {
+            request = request.setQueryParameter("auth_type", authType.toString());
+        }
+
+        Promise<WSResponse> responsePromise = request.post("");
+
+        Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {
+            @Override
+            public Result apply(WSResponse wsResponse) throws Throwable {
+                JsonNode json = wsResponse.asJson();
+
+                if (json.has("success") && !json.get("success").asBoolean()) {
+                    flash("error", json.get("message").asText());
+                    return Application.GO_HOME;
+                }
+
+                String channel = json.get("channel").asText();
+                ctx().session().put("channel", channel);
+
+                String callbackUrl = routes.Mfa.check().absoluteURL(ctx().request());
+                String redirectUrl = mfaSite + "/mfa/index?channel=" + channel + "&callback_url=" + callbackUrl;
+
+                return redirect(redirectUrl);
             }
         });
 

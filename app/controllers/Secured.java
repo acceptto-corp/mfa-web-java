@@ -19,7 +19,7 @@ public class Secured extends Security.Authenticator {
         }
 
         LocalUser user = LocalUser.findByEmail(email);
-        if (user == null || (user.mfa_email != null && user.mfa_email != "" && !user.mfa_authenticated)) {
+        if (user == null || (user.mfa_email != null && user.mfa_email != "" && (user.mfa_authenticated == null || !user.mfa_authenticated))) {
             return null;
         }
 

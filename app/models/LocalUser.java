@@ -45,7 +45,8 @@ public class LocalUser extends Model {
 
     public String mfa_email;
 
-    public Boolean mfa_authenticated;
+    @Formats.NonEmpty
+    public Boolean mfa_authenticated = false;
 
     // -- Queries (long id, user.class)
     public static Model.Finder<Long, LocalUser> find = new Model.Finder<Long, LocalUser>(Long.class, LocalUser.class);

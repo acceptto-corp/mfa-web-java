@@ -40,10 +40,10 @@ public class Application extends Controller {
         String email = ctx().session().get("email");
         if (email != null) {
             LocalUser user = LocalUser.findByEmail(email);
-            if (user != null && user.validated && (user.mfa_email == null || user.mfa_authenticated)) {
+            if (user != null && user.validated && (user.mfa_email == null || (user.mfa_authenticated != null && user.mfa_authenticated))) {
                 return GO_DASHBOARD;
             } else {
-                if (user.mfa_email != null && !user.mfa_authenticated) {
+                if (user.mfa_email != null && (user.mfa_authenticated == null || !user.mfa_authenticated)) {
                     Logger.debug("User mfa access enabled but is not authenticated");
                 }
 

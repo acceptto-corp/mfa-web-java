@@ -33,7 +33,8 @@ GET     /email/:token               controllers.account.settings.Email.validateE
 
 # Acceptto MFA
 GET     /auth/mfa_check             controllers.Mfa.check()
-GET     /auth/mfa/callback          controllers.Mfa.callBack()
+GET     /auth/mfa/enable            controllers.Mfa.enableMfa()
+POST    /auth/mfa/enable            controllers.Mfa.enableMfaPost()
 GET     /mfa                        controllers.Dashboard.index()
 
 # Map static resources from the /public folder to the /assets URL path

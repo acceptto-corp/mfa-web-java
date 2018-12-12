@@ -6,45 +6,67 @@ import play.Logger;
 import play.Play;
 import play.data.DynamicForm;
 import play.data.Form;
+import play.libs.F;
 import play.mvc.*;
 import play.libs.ws.*;
 import play.libs.F.Function;
 import play.libs.F.Promise;
+import views.html.account.signup.created;
+import views.html.mfa.enablemfa;
 
 public class Mfa extends Controller {
 
-    public static Result callBack() {
+    @Security.Authenticated(Secured.class)
+    public static Result enableMfa() {
+        return ok(enablemfa.render(LocalUser.findByEmail(request().username())));
+    }
+
+    @Security.Authenticated(Secured.class)
+    public static Promise<Result> enableMfaPost() {
+        final String email = request().username();
         DynamicForm form = Form.form().bindFromRequest();
-        String error = form.get("error");
-        if (error != null && !error.isEmpty()) {
-            Logger.debug("MFA Callback - Error returned: " + error);
-            ctx().flash().put("notice", error);
-            return redirect(routes.Application.index());
-        }
+        String mfa_email = form.get("mfa_email");
 
-        String accessToken = form.get("access_token");
-        if (accessToken == null || accessToken.isEmpty()) {
-            Logger.debug("MFA Callback - Access Token was null or empty");
-            ctx().flash().put("notice", "Invalid parameters!");
-            return redirect(routes.Application.index());
-        }
+        final String mfaSite = Play.application().configuration().getString("mfa.site");
 
-        String email = ctx().session().get("email");
-        if (email == null || email.isEmpty()) {
-            Logger.debug("MFA Callback - User expired");
-            ctx().flash().put("notice", "Time out!");
-            return redirect(routes.Application.index());
-        }
+        F.Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/is_user_valid")
+                .setQueryParameter("email", mfa_email)
+                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
+                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                .setContentType("application/x-www-form-urlencoded")
+                .post("");
 
-        Logger.debug("MFA Callback - Everything OK");
+        return responsePromise.map(new F.Function<WSResponse, Result>() {
+            @Override
+            public Result apply(WSResponse wsResponse) throws Throwable {
+                JsonNode json = wsResponse.asJson();
 
-        LocalUser user = LocalUser.findByEmail(email);
-        user.mfa_email = accessToken;
-        user.mfa_authenticated = true;
-        user.save();
+                if (json.has("valid") && json.get("valid").asBoolean()) {
+                    if (json.has("registration_state") && json.get("registration_state").asText().equals("finished")) {
+                        // Using the same email as Acceptto one.
+                        LocalUser user = LocalUser.findByEmail(email);
+                        if (user == null) {
+                            Logger.error("User " + email + " not found");
+                            ctx().flash().put("notice", "User not found.");
+                            return redirect(routes.Dashboard.index());
+                        }
 
-        ctx().flash().put("notice", "Enabling Multi Factor Authentication was successful.");
-        return redirect(routes.Dashboard.index());
+                        user.mfa_email = mfa_email;
+                        user.mfa_authenticated = true;
+                        user.save();
+                        Logger.debug("MFA email has set to " + mfa_email);
+                        ctx().flash().put("notice", "Enabling Multi Factor Authentication was successful.");
+                        return redirect(routes.Dashboard.index());
+                    } else {
+                        ctx().flash().put("notice", "Entered email hasn't finished the registration process yet.");
+                        return redirect(routes.Mfa.enableMfa());
+                    }
+                }
+
+                ctx().flash().put("notice", "Entered email is not a valid Acceptto user.");
+                return redirect(routes.Mfa.enableMfa());
+            }
+        });
     }
 
     public static Promise<Result> check() {
@@ -62,7 +84,7 @@ public class Mfa extends Controller {
                 .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
                 .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
                 .setQueryParameter("channel", channel)
-                .setQueryParameter("email", email)
+                .setQueryParameter("email", user.mfa_email)
                 .post("");
 
         Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {
@@ -71,7 +93,7 @@ public class Mfa extends Controller {
                 JsonNode json = wsResponse.asJson();
 
                 String status = json.get("status").asText();
-                
+
                 Logger.debug("Check result status: " + status);
 
                 if (status.equals("approved")) {

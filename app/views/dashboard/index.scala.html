@@ -1,10 +1,10 @@
-@(user: LocalUser, enableMfaUrl: String)
+@(user: LocalUser)
 
 @main(user) {
 
     @if(user.mfa_email == null){
         <p>
-            <a href='@enableMfaUrl'>Enable MFA</a>
+            <a href='@routes.Mfa.enableMfa()'>Enable MFA</a>
         </p>
     }
 

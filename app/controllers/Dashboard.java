@@ -16,10 +16,6 @@ import views.html.dashboard.index;
 public class Dashboard extends Controller {
 
     public static Result index() {
-        String mfaSite = Play.application().configuration().getString("mfa.site");
-        String mfaUid = Play.application().configuration().getString("mfa.app.uid");
-        String enableMfaUrl = mfaSite + "/mfa/email?uid=" + mfaUid;
-
-        return ok(index.render(LocalUser.findByEmail(request().username()), enableMfaUrl));
+        return ok(index.render(LocalUser.findByEmail(request().username())));
     }
 }

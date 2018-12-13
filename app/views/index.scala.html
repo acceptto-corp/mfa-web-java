@@ -1,23 +1,67 @@
-@(signupForm: Form[Application.Register], loginForm: Form[Application.Login])
+@(signupForm: Form[Application.Register], loginForm: Form[Application.Login], appUID: String)
 
 @scripts = {
-    <script src="@routes.Assets.at("javascripts/password.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/password.js")" type="text/javascript"></script>
+    <script src="https://faye.acceptto.com/faye/faye.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+      $(function() {
+        uid = "@appUID"
+
+        var faye = new Faye.Client("https://faye.acceptto.com/faye");
+        hex1 = Math.floor(Math.random()*16777215).toString(16);
+        hex2 = Math.floor(Math.random()*16777215).toString(16);
+        var channel = hex1 + hex2;
+        var qrcodeJSON = '{ "app_uid":"' + uid + '", "channel":"' + channel + '" }';
+        var qrcode = window.btoa(qrcodeJSON);
+        $('#login_qrcode').attr("src", "https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=0&data=" + qrcode);
+        faye.subscribe("/messages/" + channel, function (data) {
+          window.location.replace("/qrcode/channel?channel=" + channel);
+        });
+      });
+    </script>
 }
 
 @main(null, scripts) {
 
-  @wflash()
-  <div class="col-lg-6">
-      Sed (saepe enim redeo ad Scipionem, cuius omnis sermo erat de amicitia) querebatur, quod omnibus in rebus homines diligentiores essent; capras et oves quot quisque haberet, dicere posse, amicos quot haberet, non posse dicere et in illis quidem parandis adhibere curam, in amicis eligendis neglegentis esse nec habere quasi signa quaedam et notas, quibus eos qui ad amicitias essent idonei, iudicarent. Sunt igitur firmi et stabiles et constantes eligendi; cuius generis est magna penuria. Et iudicare difficile est sane nisi expertum; experiendum autem est in ipsa amicitia. Ita praecurrit amicitia iudicium tollitque experiendi potestatem.
-  </div>
+@wflash()
+<div class="col-lg-6">
+    Sed (saepe enim redeo ad Scipionem, cuius omnis sermo erat de amicitia) querebatur, quod omnibus in rebus homines diligentiores essent; capras et oves quot quisque haberet, dicere posse, amicos quot haberet, non posse dicere et in illis quidem parandis adhibere curam, in amicis eligendis neglegentis esse nec habere quasi signa quaedam et notas, quibus eos qui ad amicitias essent idonei, iudicarent. Sunt igitur firmi et stabiles et constantes eligendi; cuius generis est magna penuria. Et iudicare difficile est sane nisi expertum; experiendum autem est in ipsa amicitia. Ita praecurrit amicitia iudicium tollitque experiendi potestatem.
+</div>
 
-  <div class="col-lg-6">
+<div class="col-lg-6">
     <div class="well">
-      @login(loginForm)
+        <div class="row">
+            <div class="col-md-6">
+                @login(loginForm)
+            </div>
+            <div class="col-md-6">
+                <div style="text-align: center; margin-top: 30px">
+                    <img id="login_qrcode" alt="qrcode">
+                </div>
+                <p class="text-center" style="margin-top: 10px">Just scan using QRCode reader tab of It'sMe™ app.</p>
+                <div class="row" style="margin-top: 20px;">
+                    <div class="col-md-6">
+                        <div class="icon">
+                            <a href="https://itunes.apple.com/us/app/acceptto/id893534370?mt=8">
+                                <img alt="app-store" class="img-responsive app-icon" src="https://mfa.acceptto.com/assets/app-store-badge-244a34babf5fe328d3217bada7a7bc94.png">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="icon">
+                            <a href="https://play.google.com/store/apps/details?id=com.acceptto.mfa">
+                                <img alt="google-play" class="img-responsive app-icon" src="https://mfa.acceptto.com/assets/en-play-badge-3dcede5f1a4791ac41fc87dccda40fea.png">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="well">
-      @account.signup.createFormOnly(signupForm)
+        @account.signup.createFormOnly(signupForm)
     </div>
-  </div>
+</div>
 }

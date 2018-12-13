@@ -32,8 +32,8 @@ public class Mfa extends Controller {
 
         F.Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/is_user_valid")
                 .setQueryParameter("email", mfa_email)
-                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                .setQueryParameter("uid", Application.appUID)
+                .setQueryParameter("secret", Application.appSecret)
                 .setContentType("application/x-www-form-urlencoded")
                 .post("");
 
@@ -82,8 +82,8 @@ public class Mfa extends Controller {
         String channel = ctx().session().get("channel");
 
         Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/check")
-                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                .setQueryParameter("uid", Application.appUID)
+                .setQueryParameter("secret", Application.appSecret)
                 .setQueryParameter("channel", channel)
                 .setQueryParameter("email", user.mfa_email)
                 .post("");
@@ -117,13 +117,57 @@ public class Mfa extends Controller {
         return resultPromise;
     }
 
+
+    public static Promise<Result> qrcode(String websocket_channel) {
+        String mfaSite = Play.application().configuration().getString("mfa.site");
+
+        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/get_user_by_websocket_channel")
+                .setContentType("application/x-www-form-urlencoded")
+                .setQueryParameter("uid", Application.appUID)
+                .setQueryParameter("secret", Application.appSecret)
+                .setQueryParameter("websocket_channel", websocket_channel)
+                .post("");
+
+        Promise<Result> resultPromise = responsePromise.flatMap(new Function<WSResponse, Promise<Result>>() {
+            @Override
+            public Promise<Result> apply(WSResponse wsResponse) throws Throwable {
+                JsonNode json = wsResponse.asJson();
+
+                Boolean success = json.get("success").asBoolean();
+                String msg = json.get("message").asText();
+
+                if (success) {
+                    String userEmail = json.get("user_email").asText();
+                    Logger.debug("User email: " + userEmail);
+                    LocalUser user = LocalUser.findByMfaEmail(userEmail);
+                    if (user == null) {
+                        Logger.error("No user find with email: " + userEmail);
+                        ctx().flash().put("notice", "User not found!");
+                        return F.Promise.pure(redirect(routes.Application.index()));
+                    }
+
+                    session("email", user.email);
+                    user.mfa_authenticated = false;
+                    user.save();
+
+                    return accepttoAuthenticate(user, 1);
+                } else {
+                    ctx().flash().put("notice", "Couldn't continue the operation. " + msg);
+                    return F.Promise.pure(redirect(routes.Application.index()));
+                }
+            }
+        });
+
+        return resultPromise;
+    }
+
     public static Promise<Result> accepttoAuthenticate(LocalUser user, Integer authType){
         final String mfaSite = Play.application().configuration().getString("mfa.site");
 
         WSRequestHolder request = WS.url(mfaSite + "/api/v9/authenticate_with_options")
                 .setQueryParameter("email", user.mfa_email)
-                .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                .setQueryParameter("uid", Application.appUID)
+                .setQueryParameter("secret", Application.appSecret)
                 .setQueryParameter("message", "Acceptto is wishing to authorize")
                 .setQueryParameter("type", "Login");
 

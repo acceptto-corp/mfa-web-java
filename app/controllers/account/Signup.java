@@ -86,8 +86,8 @@ public class Signup extends Controller {
 
             F.Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/is_user_valid")
                     .setQueryParameter("email", register.email)
-                    .setQueryParameter("uid", Play.application().configuration().getString("mfa.app.uid"))
-                    .setQueryParameter("secret", Play.application().configuration().getString("mfa.app.secret"))
+                    .setQueryParameter("uid", Application.appUID)
+                    .setQueryParameter("secret", Application.appSecret)
                     .setContentType("application/x-www-form-urlencoded")
                     .post("");
 

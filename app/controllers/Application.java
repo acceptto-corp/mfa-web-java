@@ -30,6 +30,9 @@ public class Application extends Controller {
             routes.Dashboard.index()
     );
 
+    public final static String appUID = Play.application().configuration().getString("mfa.app.uid");
+    public final static String appSecret = Play.application().configuration().getString("mfa.app.secret");
+
     /**
      * Display the login page or dashboard if connected
      *
@@ -52,7 +55,7 @@ public class Application extends Controller {
             }
         }
 
-        return ok(index.render(form(Register.class), form(Login.class)));
+        return ok(index.render(form(Register.class), form(Login.class), appUID));
     }
 
     /**
@@ -136,7 +139,7 @@ public class Application extends Controller {
         Form<Register> registerForm = form(Register.class);
 
         if (loginForm.hasErrors()) {
-            return Promise.pure((Result) badRequest(index.render(registerForm, loginForm)));
+            return Promise.pure((Result) badRequest(index.render(registerForm, loginForm, appUID)));
         } else {
 
             session("email", loginForm.get().email);

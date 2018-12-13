@@ -5,10 +5,6 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
 
-/**
- * User: yesnault
- * Date: 22/01/12
- */
 public class Secured extends Security.Authenticator {
 
     @Override

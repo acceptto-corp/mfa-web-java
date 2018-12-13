@@ -62,6 +62,16 @@ public class LocalUser extends Model {
     }
 
     /**
+     * Retrieve a user with an MFA email.
+     *
+     * @param mfaEmail MFA email to search
+     * @return a user
+     */
+    public static LocalUser findByMfaEmail(String mfaEmail) {
+        return find.where().eq("mfa_email", mfaEmail).findUnique();
+    }
+
+    /**
      * Retrieve a user from a fullname.
      *
      * @param fullname Full name

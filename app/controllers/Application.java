@@ -149,7 +149,7 @@ public class Application extends Controller {
                 user.mfa_authenticated = false;
                 user.save();
 
-                return Mfa.accepttoAuthenticate(user, null);
+                return Mfa.accepttoAuthenticate(user, false);
             }
 
             return Promise.pure(GO_DASHBOARD);

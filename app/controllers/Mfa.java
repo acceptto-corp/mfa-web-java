@@ -150,7 +150,7 @@ public class Mfa extends Controller {
                     user.mfa_authenticated = false;
                     user.save();
 
-                    return accepttoAuthenticate(user, 1);
+                    return accepttoAuthenticate(user, true);
                 } else {
                     ctx().flash().put("notice", "Couldn't continue the operation. " + msg);
                     return F.Promise.pure(redirect(routes.Application.index()));
@@ -161,21 +161,18 @@ public class Mfa extends Controller {
         return resultPromise;
     }
 
-    public static Promise<Result> accepttoAuthenticate(LocalUser user, Integer authType){
+    public static Promise<Result> accepttoAuthenticate(LocalUser user, boolean redirectToWaiting){
         final String mfaSite = Play.application().configuration().getString("mfa.site");
+        final String callbackUrl = routes.Mfa.check().absoluteURL(ctx().request());
 
-        WSRequestHolder request = WS.url(mfaSite + "/api/v9/authenticate_with_options")
-                .setQueryParameter("email", user.mfa_email)
-                .setQueryParameter("uid", Application.appUID)
-                .setQueryParameter("secret", Application.appSecret)
-                .setQueryParameter("message", "Acceptto is wishing to authorize")
-                .setQueryParameter("type", "Login");
-
-        if (authType != null) {
-            request = request.setQueryParameter("auth_type", authType.toString());
-        }
-
-        Promise<WSResponse> responsePromise = request.post("");
+        Promise<WSResponse> responsePromise = WS.url(mfaSite + "/api/v9/authenticate_with_options")
+            .setQueryParameter("email", user.mfa_email)
+            .setQueryParameter("uid", Application.appUID)
+            .setQueryParameter("secret", Application.appSecret)
+            .setQueryParameter("message", "Acceptto is wishing to authorize")
+            .setQueryParameter("type", "Login")
+            .setQueryParameter("callback_url", callbackUrl)
+            .post("");
 
         Promise<Result> resultPromise = responsePromise.map(new Function<WSResponse, Result>() {
             @Override
@@ -190,8 +187,8 @@ public class Mfa extends Controller {
                 String channel = json.get("channel").asText();
                 ctx().session().put("channel", channel);
 
-                String callbackUrl = routes.Mfa.check().absoluteURL(ctx().request());
-                String redirectUrl = mfaSite + "/mfa/index?channel=" + channel + "&callback_url=" + callbackUrl;
+                String redirectPage = redirectToWaiting ? "waiting" : "index";
+                String redirectUrl = mfaSite + "/mfa/" + redirectPage + "?channel=" + channel + "&callback_url=" + callbackUrl;
 
                 return redirect(redirectUrl);
             }

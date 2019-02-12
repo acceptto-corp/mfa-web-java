@@ -17,6 +17,12 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.25.2"
 )
 
+dependencyOverrides ++= Set(
+  "com.google.guava" % "guava" % "16.0.1",
+  "xml-apis" % "xml-apis" % "1.4.01",
+  "io.netty" % "netty" % "3.9.5.Final"
+)
+
 resolvers ++= Seq(
     "Apache" at "http://repo1.maven.org/maven2/",
     "jBCrypt Repository" at "http://repo1.maven.org/maven2/org/",

@@ -76,7 +76,7 @@ public class Mfa extends Controller {
         final String email = session("email");
         final LocalUser user = LocalUser.findByEmail(email);
         if (user == null) {
-            ctx().flash().put("notice", "MFA Two Factor Authentication request timed out with no response.");
+            ctx().flash().put("notice", "MFA Authentication request timed out with no response.");
             return Promise.pure(redirect(routes.Application.index()));
         }
 
@@ -102,15 +102,15 @@ public class Mfa extends Controller {
                 if (status.equals("approved")) {
                     user.mfa_authenticated = true;
                     user.save();
-                    ctx().flash().put("notice", "MFA Two Factor Authentication request was accepted.");
+                    ctx().flash().put("notice", "MFA Authentication request was accepted.");
                     return redirect(routes.Dashboard.index());
                 } else if (status.equals("rejected")) {
                     user.mfa_authenticated = false;
                     user.save();
-                    ctx().flash().put("notice", "MFA Two Factor Authentication request was declined.");
+                    ctx().flash().put("notice", "MFA Authentication request was declined.");
                     return redirect(routes.Dashboard.index());
                 } else {
-                    ctx().flash().put("notice", "MFA Two Factor Authentication request was unknown!");
+                    ctx().flash().put("notice", "MFA Authentication request was unknown!");
                     return redirect(routes.Dashboard.index());
                 }
             }

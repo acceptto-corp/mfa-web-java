@@ -46,7 +46,7 @@ public class Application extends Controller {
             if (user != null && user.validated && (user.mfa_email == null || (user.mfa_authenticated != null && user.mfa_authenticated))) {
                 return GO_DASHBOARD;
             } else {
-                if (user.mfa_email != null && (user.mfa_authenticated == null || !user.mfa_authenticated)) {
+                if (user != null && user.mfa_email != null && (user.mfa_authenticated == null || !user.mfa_authenticated)) {
                     Logger.debug("User mfa access enabled but is not authenticated");
                 }
 

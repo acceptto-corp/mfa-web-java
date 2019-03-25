@@ -1,6 +1,5 @@
 package models;
 
-import models.utils.Mail;
 import play.Configuration;
 import play.Logger;
 import play.data.format.Formats;
@@ -104,65 +103,4 @@ public class Token extends Model {
         token.save();
         return token;
     }
-
-    /**
-     * Send the Email to confirm ask new password.
-     *
-     * @param user the current user
-     * @throws java.net.MalformedURLException if token is wrong.
-     */
-    public static void sendMailResetPassword(LocalUser user) throws MalformedURLException {
-        sendMail(user, TypeToken.password, null);
-    }
-
-    /**
-     * Send the Email to confirm ask new password.
-     *
-     * @param user  the current user
-     * @param email email for a change email token
-     * @throws java.net.MalformedURLException if token is wrong.
-     */
-    public static void sendMailChangeMail(LocalUser user, @Nullable String email) throws MalformedURLException {
-        sendMail(user, TypeToken.email, email);
-    }
-
-    /**
-     * Send the Email to confirm ask new password.
-     *
-     * @param user  the current user
-     * @param type  token type
-     * @param email email for a change email token
-     * @throws java.net.MalformedURLException if token is wrong.
-     */
-    private static void sendMail(LocalUser user, TypeToken type, String email) throws MalformedURLException {
-
-        Token token = getNewToken(user, type, email);
-        String externalServer = Configuration.root().getString("server.hostname");
-
-        String subject = null;
-        String message = null;
-        String toMail = null;
-
-        // Should use reverse routing here.
-        String urlString = urlString = "http://" + externalServer + "/" + type.urlPath + "/" + token.token;
-        URL url = new URL(urlString); // validate the URL
-
-        switch (type) {
-            case password:
-                subject = Messages.get("mail.reset.ask.subject");
-                message = Messages.get("mail.reset.ask.message", url.toString());
-                toMail = user.email;
-                break;
-            case email:
-                subject = Messages.get("mail.change.ask.subject");
-                message = Messages.get("mail.change.ask.message", url.toString());
-                toMail = token.email; // == email parameter
-                break;
-        }
-
-        Logger.debug("sendMailResetLink: url = " + url);
-        Mail.Envelop envelop = new Mail.Envelop(subject, message, toMail);
-        Mail.sendMail(envelop);
-    }
-
 }

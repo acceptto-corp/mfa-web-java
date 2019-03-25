@@ -62,6 +62,8 @@ public class Mfa extends Controller {
                         ctx().flash().put("notice", "Entered email hasn't finished the registration process yet.");
                         return redirect(routes.Mfa.enableMfa());
                     }
+                } else {
+                    Logger.error(json.toString());
                 }
 
                 ctx().flash().put("notice", "Entered email is not a valid Acceptto user.");

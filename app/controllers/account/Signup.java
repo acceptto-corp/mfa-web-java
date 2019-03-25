@@ -5,8 +5,6 @@ import controllers.Application;
 import models.LocalUser;
 import models.utils.AppException;
 import models.utils.Hash;
-import models.utils.Mail;
-import org.apache.commons.mail.EmailException;
 import play.Configuration;
 import play.Logger;
 import play.Play;
@@ -28,7 +26,7 @@ import java.util.UUID;
 import static play.data.Form.form;
 
 /**
- * Signup to PlayStartApp : save and send confirm mail.
+ * Signup to PlayStartApp : save.
  * <p/>
  * User: yesnault
  * Date: 31/01/12
@@ -113,10 +111,7 @@ public class Signup extends Controller {
             });
 
             return resultPromise;
-        }/* catch (EmailException e) {
-            Logger.debug("Signup.save Cannot send email", e);
-            flash("error", Messages.get("error.sending.email"));
-        }*/ catch (Exception e) {
+        } catch (Exception e) {
             Logger.error("Signup.save error", e);
             flash("error", Messages.get("error.technical"));
         }
@@ -141,24 +136,6 @@ public class Signup extends Controller {
     }
 
     /**
-     * Send the welcome Email with the link to confirm.
-     *
-     * @param user user created
-     * @throws EmailException Exception when sending mail
-     */
-    private static void sendMailAskForConfirmation(LocalUser user) throws EmailException, MalformedURLException {
-        String subject = Messages.get("mail.confirm.subject");
-
-        String urlString = "http://" + Configuration.root().getString("server.hostname");
-        urlString += "/confirm/" + user.confirmationToken;
-        URL url = new URL(urlString); // validate the URL, will throw an exception if bad.
-        String message = Messages.get("mail.confirm.message", url.toString());
-
-        Mail.Envelop envelop = new Mail.Envelop(subject, message, user.email);
-        Mail.sendMail(envelop);
-    }
-
-    /**
      * Valid an account with the url in the confirm mail.
      *
      * @param token a token attached to the user we're confirming.
@@ -178,7 +155,6 @@ public class Signup extends Controller {
 
         try {
             if (LocalUser.confirm(user)) {
-                sendMailConfirmation(user);
                 flash("success", Messages.get("account.successfully.validated"));
                 return ok(confirm.render());
             } else {
@@ -189,23 +165,7 @@ public class Signup extends Controller {
         } catch (AppException e) {
             Logger.error("Cannot signup", e);
             flash("error", Messages.get("error.technical"));
-        } catch (EmailException e) {
-            Logger.debug("Cannot send email", e);
-            flash("error", Messages.get("error.sending.confirm.email"));
         }
         return badRequest(confirm.render());
-    }
-
-    /**
-     * Send the confirm mail.
-     *
-     * @param user user created
-     * @throws EmailException Exception when sending mail
-     */
-    private static void sendMailConfirmation(LocalUser user) throws EmailException {
-        String subject = Messages.get("mail.welcome.subject");
-        String message = Messages.get("mail.welcome.message");
-        Mail.Envelop envelop = new Mail.Envelop(subject, message, user.email);
-        Mail.sendMail(envelop);
     }
 }

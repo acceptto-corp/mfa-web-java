@@ -4,23 +4,21 @@ name := """acceptto-mfa-java"""
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq(
   jdbc,
-  javaEbean,
   cache,
+  "com.h2database" % "h2" % "1.4.192",
   "org.mindrot" % "jbcrypt" % "0.3m",
-  "com.typesafe" %% "play-plugins-mailer" % "2.2.0",
   filters,
-  javaWs,
-  "org.xerial" % "sqlite-jdbc" % "3.25.2"
+  javaWs
 )
 
 dependencyOverrides ++= Set(
-  "com.google.guava" % "guava" % "16.0.1",
-  "xml-apis" % "xml-apis" % "1.4.01",
-  "io.netty" % "netty" % "3.9.5.Final"
+  "com.google.guava" % "guava" % "18.0",
+  "org.jboss.logging" % "jboss-logging" % "3.2.1.Final",
+  "io.netty" % "netty" % "3.10.6.Final"
 )
 
 resolvers ++= Seq(
@@ -29,4 +27,4 @@ resolvers ++= Seq(
     "Sonatype OSS Snasphots" at "http://oss.sonatype.org/content/repositories/snapshots"
 )
 
-lazy val root = (project in file(".")).enablePlugins(play.PlayJava)
+lazy val root = (project in file(".")).enablePlugins(PlayJava, PlayEbean)
